@@ -1,0 +1,20 @@
+{
+    "name": "fizzday/fizzjwt",
+    "description": "A simple library to encode and decode JSON Web Tokens (JWT) in PHP. Should conform to the current spec.",
+    "homepage": "https://github.com/fizzday/fizzjwt",
+    "authors": [
+        {
+            "name": "Fizz",
+            "email": "fizzday@yeah.net",
+            "role": "Developer"
+        }
+    ],
+    "require": { },
+    "require-dev": { },
+    "autoload": {
+        "psr-4": {
+            "Fizzday\\FizzJWT\\": "src/"
+        }
+    },
+    "license": "MIT"
+}
