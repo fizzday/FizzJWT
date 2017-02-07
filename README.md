@@ -1,6 +1,6 @@
 FizzJWT
 =======
-A simple library to encode and decode JSON Web Tokens (JWT) in PHP, conforming to 
+A simple library to encode and decode JSON Web Tokens (JWT) in PHP, based on firebase/jwt, add the decode() third param default 'HS256'
 
 Installation
 ------------
@@ -18,7 +18,7 @@ Example
 use Fizzday\FizzJWT\FizzJWT;
 
 $key = "example_key";
-$token = array(
+$payload = array(
     "iss" => "http://fizzday.net",
     "aud" => "http://fizzday.net",
     "iat" => time(),
@@ -34,8 +34,8 @@ $token = array(
  * https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40
  * for a list of spec-compliant algorithms.
  */
-$jwt = JWT::encode($token, $key);
-$decoded = JWT::decode($jwt, $key);
+$token = FizzJWT::encode($payload, $key);
+$decoded = FizzJWT::decode($token, $key);
 
 print_r($decoded);
 
@@ -53,6 +53,6 @@ $decoded_array = (array) $decoded;
  *
  * Source: http://self-issued.info/docs/draft-ietf-oauth-json-web-token.html#nbfDef
  */
-JWT::$leeway = 60; // $leeway in seconds
-$decoded = JWT::decode($jwt, $key);
+FizzJWT::$leeway = 60; // $leeway in seconds
+$decoded = FizzJWT::decode($token, $key);
 ```
