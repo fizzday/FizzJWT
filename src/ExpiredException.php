@@ -1,5 +1,5 @@
 <?php
-namespace Firebase\JWT;
+namespace Fizzday\FizzJWT;
 
 class ExpiredException extends \UnexpectedValueException
 {

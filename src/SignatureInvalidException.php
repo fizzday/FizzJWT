@@ -1,5 +1,5 @@
 <?php
-namespace Firebase\JWT;
+namespace Fizzday\FizzJWT;
 
 class SignatureInvalidException extends \UnexpectedValueException
 {
