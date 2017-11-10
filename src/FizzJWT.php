@@ -2,9 +2,7 @@
 
 namespace Fizzday\FizzJWT;
 
-use \DomainException;
-use \InvalidArgumentException;
-use \UnexpectedValueException;
+use \Exception;
 use \DateTime;
 
 /**
@@ -56,11 +54,11 @@ class FizzJWT
      *
      * @return object The JWT's payload as a PHP object
      *
-     * @throws UnexpectedValueException     Provided JWT was invalid
-     * @throws SignatureInvalidException    Provided JWT was invalid because the signature verification failed
-     * @throws BeforeValidException         Provided JWT is trying to be used before it's eligible as defined by 'nbf'
-     * @throws BeforeValidException         Provided JWT is trying to be used before it's been created as defined by 'iat'
-     * @throws ExpiredException             Provided JWT has since expired, as defined by the 'exp' claim
+     * @throws Exception     Provided JWT was invalid
+     * @throws Exception    Provided JWT was invalid because the signature verification failed
+     * @throws Exception         Provided JWT is trying to be used before it's eligible as defined by 'nbf'
+     * @throws Exception         Provided JWT is trying to be used before it's been created as defined by 'iat'
+     * @throws Exception             Provided JWT has since expired, as defined by the 'exp' claim
      *
      * @uses jsonDecode
      * @uses urlsafeB64Decode
@@ -70,50 +68,50 @@ class FizzJWT
         $timestamp = is_null(static::$timestamp) ? time() : static::$timestamp;
 
         if (empty($key)) {
-            throw new InvalidArgumentException('Key may not be empty');
+            throw new Exception('Key may not be empty');
         }
         if (!is_array($allowed_algs)) {
-            throw new InvalidArgumentException('Algorithm not allowed');
+            throw new Exception('Algorithm not allowed');
         }
         $tks = explode('.', $jwt);
         if (count($tks) != 3) {
-            throw new UnexpectedValueException('Wrong number of segments');
+            throw new Exception('Wrong number of segments');
         }
         list($headb64, $bodyb64, $cryptob64) = $tks;
         if (null === ($header = static::jsonDecode(static::urlsafeB64Decode($headb64)))) {
-            throw new UnexpectedValueException('Invalid header encoding');
+            throw new Exception('Invalid header encoding');
         }
         if (null === $payload = static::jsonDecode(static::urlsafeB64Decode($bodyb64))) {
-            throw new UnexpectedValueException('Invalid claims encoding');
+            throw new Exception('Invalid claims encoding');
         }
         $sig = static::urlsafeB64Decode($cryptob64);
         
         if (empty($header->alg)) {
-            throw new UnexpectedValueException('Empty algorithm');
+            throw new Exception('Empty algorithm');
         }
         if (empty(static::$supported_algs[$header->alg])) {
-            throw new UnexpectedValueException('Algorithm not supported');
+            throw new Exception('Algorithm not supported');
         }
         if (!in_array($header->alg, $allowed_algs)) {
-            throw new UnexpectedValueException('Algorithm not allowed');
+            throw new Exception('Algorithm not allowed');
         }
         if (is_array($key) || $key instanceof \ArrayAccess) {
             if (isset($header->kid)) {
                 $key = $key[$header->kid];
             } else {
-                throw new UnexpectedValueException('"kid" empty, unable to lookup correct key');
+                throw new Exception('"kid" empty, unable to lookup correct key');
             }
         }
 
         // Check the signature
         if (!static::verify("$headb64.$bodyb64", $sig, $key, $header->alg)) {
-            throw new SignatureInvalidException('Signature verification failed');
+            throw new Exception('Signature verification failed');
         }
 
         // Check if the nbf if it is defined. This is the time that the
         // token can actually be used. If it's not yet that time, abort.
         if (isset($payload->nbf) && $payload->nbf > ($timestamp + static::$leeway)) {
-            throw new BeforeValidException(
+            throw new Exception(
                 'Cannot handle token prior to ' . date(DateTime::ISO8601, $payload->nbf)
             );
         }
@@ -122,14 +120,14 @@ class FizzJWT
         // using tokens that have been created for later use (and haven't
         // correctly used the nbf claim).
         if (isset($payload->iat) && $payload->iat > ($timestamp + static::$leeway)) {
-            throw new BeforeValidException(
+            throw new Exception(
                 'Cannot handle token prior to ' . date(DateTime::ISO8601, $payload->iat)
             );
         }
 
         // Check if this token has expired.
         if (isset($payload->exp) && ($timestamp - static::$leeway) >= $payload->exp) {
-            throw new ExpiredException('Expired token');
+            throw new Exception('Expired token');
         }
 
         return $payload;
@@ -181,12 +179,12 @@ class FizzJWT
      *
      * @return string An encrypted message
      *
-     * @throws DomainException Unsupported algorithm was specified
+     * @throws Exception Unsupported algorithm was specified
      */
     public static function sign($msg, $key, $alg = 'HS256')
     {
         if (empty(static::$supported_algs[$alg])) {
-            throw new DomainException('Algorithm not supported');
+            throw new Exception('Algorithm not supported');
         }
         list($function, $algorithm) = static::$supported_algs[$alg];
         switch($function) {
@@ -196,7 +194,7 @@ class FizzJWT
                 $signature = '';
                 $success = openssl_sign($msg, $signature, $key, $algorithm);
                 if (!$success) {
-                    throw new DomainException("OpenSSL unable to sign data");
+                    throw new Exception("OpenSSL unable to sign data");
                 } else {
                     return $signature;
                 }
@@ -214,12 +212,12 @@ class FizzJWT
      *
      * @return bool
      *
-     * @throws DomainException Invalid Algorithm or OpenSSL failure
+     * @throws Exception Invalid Algorithm or OpenSSL failure
      */
     private static function verify($msg, $signature, $key, $alg)
     {
         if (empty(static::$supported_algs[$alg])) {
-            throw new DomainException('Algorithm not supported');
+            throw new Exception('Algorithm not supported');
         }
 
         list($function, $algorithm) = static::$supported_algs[$alg];
@@ -227,7 +225,7 @@ class FizzJWT
             case 'openssl':
                 $success = openssl_verify($msg, $signature, $key, $algorithm);
                 if (!$success) {
-                    throw new DomainException("OpenSSL unable to verify data: " . openssl_error_string());
+                    throw new Exception("OpenSSL unable to verify data: " . openssl_error_string());
                 } else {
                     return $signature;
                 }
@@ -256,7 +254,7 @@ class FizzJWT
      *
      * @return object Object representation of JSON string
      *
-     * @throws DomainException Provided string was invalid JSON
+     * @throws Exception Provided string was invalid JSON
      */
     public static function jsonDecode($input)
     {
@@ -279,7 +277,7 @@ class FizzJWT
         if (function_exists('json_last_error') && $errno = json_last_error()) {
             static::handleJsonError($errno);
         } elseif ($obj === null && $input !== 'null') {
-            throw new DomainException('Null result with non-null input');
+            throw new Exception('Null result with non-null input');
         }
         return $obj;
     }
@@ -291,7 +289,7 @@ class FizzJWT
      *
      * @return string JSON representation of the PHP object or array
      *
-     * @throws DomainException Provided object could not be encoded to valid JSON
+     * @throws Exception Provided object could not be encoded to valid JSON
      */
     public static function jsonEncode($input)
     {
@@ -299,7 +297,7 @@ class FizzJWT
         if (function_exists('json_last_error') && $errno = json_last_error()) {
             static::handleJsonError($errno);
         } elseif ($json === 'null' && $input !== null) {
-            throw new DomainException('Null result with non-null input');
+            throw new Exception('Null result with non-null input');
         }
         return $json;
     }
@@ -347,7 +345,7 @@ class FizzJWT
             JSON_ERROR_CTRL_CHAR => 'Unexpected control character found',
             JSON_ERROR_SYNTAX => 'Syntax error, malformed JSON'
         );
-        throw new DomainException(
+        throw new Exception(
             isset($messages[$errno])
             ? $messages[$errno]
             : 'Unknown JSON error: ' . $errno

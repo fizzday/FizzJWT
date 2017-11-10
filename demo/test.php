@@ -7,6 +7,7 @@ $key = 'key';
 
 $payload = array(
     'iat'=>time(),
+    'exp'=>time()+5,    // 有效期
     'name'=>'fizz',
     'age'=>18
 );
