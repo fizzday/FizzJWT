@@ -7,14 +7,13 @@ use \DateTime;
 
 /**
  * JSON Web Token implementation, based on this spec:
- * http://tools.ietf.org/html/draft-ietf-oauth-json-web-token-06
+ * https://github.com/firebase/php-jwt
  *
  * PHP version 5
  *
  * @category Authentication
- * @package  Authentication_JWT
- * @author   Neuman Vong <neuman@twilio.com>
- * @author   Anant Narayanan <anant@php.net>
+ * @package  Fizzday\FizzJWT
+ * @author   fizzday <fizzday@yeah.net>
  * @license  http://opensource.org/licenses/BSD-3-Clause 3-clause BSD
  * @link     https://github.com/firebase/php-jwt
  */
